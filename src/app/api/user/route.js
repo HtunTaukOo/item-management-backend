@@ -2,6 +2,7 @@ import corsHeaders from "@/lib/cors";
 import { getClientPromise } from "@/lib/mongodb";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
+
 export async function POST (req) {
     const data = await req.json();
     const username = data.username;
@@ -17,6 +18,7 @@ export async function POST (req) {
             headers: corsHeaders
         })
     }
+    
     try {
         const client = await getClientPromise();
         const db = client.db("wad-01");
@@ -54,4 +56,27 @@ export async function POST (req) {
             headers: corsHeaders
         })
     }
-} 
+}
+
+export async function GET() {
+  const headers = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+    ...corsHeaders
+  };
+
+  try {
+    const client = await getClientPromise();
+    const db = client.db("wad-01");
+
+    const users = await db.collection("user").find({}).toArray();
+
+    return NextResponse.json(users, { headers });
+  } catch (err) {
+    return NextResponse.json(
+      { message: err.toString() },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+}
