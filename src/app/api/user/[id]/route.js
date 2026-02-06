@@ -4,14 +4,25 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcrypt";
 
-export async function GET(req, { params }) {
-  const { id } = params;
+/* CORS preflight */
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
+/* GET user by ID */
+export async function GET(req, context) {
+  const { id } = await context.params;   // ⭐ async params FIX
 
   try {
     const client = await getClientPromise();
     const db = client.db("wad-01");
 
-    const user = await db.collection("user").findOne({ _id: new ObjectId(id) });
+    const user = await db.collection("user").findOne({
+      _id: new ObjectId(id),
+    });
 
     return NextResponse.json(user, { headers: corsHeaders });
   } catch (err) {
@@ -22,8 +33,9 @@ export async function GET(req, { params }) {
   }
 }
 
-export async function PATCH(req, { params }) {
-  const { id } = params;
+/* PATCH update user */
+export async function PATCH(req, context) {
+  const { id } = await context.params;   // ⭐ async params FIX
   const data = await req.json();
 
   const updateFields = {};
@@ -42,9 +54,10 @@ export async function PATCH(req, { params }) {
     const client = await getClientPromise();
     const db = client.db("wad-01");
 
-    const result = await db
-      .collection("user")
-      .updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
+    const result = await db.collection("user").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
+    );
 
     return NextResponse.json(result, { headers: corsHeaders });
   } catch (err) {
@@ -54,19 +67,19 @@ export async function PATCH(req, { params }) {
     );
   }
 }
-export async function DELETE(req, { params }) {
-  const { id } = params;
+
+/* DELETE → soft delete */
+export async function DELETE(req, context) {
+  const { id } = await context.params;   // ⭐ async params FIX
 
   try {
     const client = await getClientPromise();
     const db = client.db("wad-01");
 
-    const result = await db
-      .collection("user")
-      .updateOne(
-        { _id: new ObjectId(id) },
-        { $set: { status: "DELETED" } }
-      );
+    const result = await db.collection("user").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status: "DELETED" } }
+    );
 
     return NextResponse.json(result, { headers: corsHeaders });
   } catch (err) {
@@ -76,6 +89,7 @@ export async function DELETE(req, { params }) {
     );
   }
 }
+
 
 
 
